@@ -1,0 +1,70 @@
+---
+
+- name: Installing git
+  apt:
+    name: git
+    state: latest
+
+- name: Create node directory
+  file:
+      path: "{{ item  }}"
+      state: directory
+      mode: '0755'
+  with_items: ["{{ node_path }}", "{{ node_app }}"]
+
+
+- name: Download and extract Node
+  unarchive:
+    src: "https://nodejs.org/dist/v{{ node_version }}/node-v{{ node_version }}-linux-x64.tar.xz"
+    dest: "{{ node_path }}"
+    remote_src: yes
+    extra_opts: [--strip-components=1]
+    creates: "{{ node_path }}/bin/node"
+
+
+
+- name: Template a file to /etc/profile.d/node.sh
+  template:
+      src: node.sh
+      dest: /etc/profile.d/node.sh
+
+
+- name: Template a file to /etc/file.conf
+  template:
+      src: nodeapp.service
+      dest: /etc/systemd/system/nodeapp.service
+
+- name: daemon reload
+  systemd_service:
+    daemon_reload: true
+
+- name: Starting nodeapp service
+  service:
+        name: nodeapp
+        state: started
+        enabled: true
+
+
+
+
+
+
+#copy the git code
+
+- name: cloning node app
+  git:
+    repo: https://github.com/shan5a6/nodeJsApplication.git
+    dest: "{{ node_app }}"
+    force: yes
+  register: git_status
+
+- name: Node build
+  command: "{{ node_path }}/bin/npm install"
+  args:
+    chdir: "{{ node_app }}"
+  environment:
+    PATH: "{{ node_path }}/bin:{{ ansible_env.PATH }}"
+  when: git_status.changed
+  notify: Restart nodeapp
+
+

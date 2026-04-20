@@ -1,0 +1,6 @@
+---
+
+  node_version: 22.0.0
+  node_path: /opt/node
+  node_app: /opt/app
+  

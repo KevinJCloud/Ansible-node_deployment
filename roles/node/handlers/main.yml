@@ -1,0 +1,5 @@
+- name: Restart nodeapp
+  systemd:
+      name: nodeapp
+      state: started
+      enabled: yes
